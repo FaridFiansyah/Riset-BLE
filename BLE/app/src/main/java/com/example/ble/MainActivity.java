@@ -27,7 +27,7 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String BLE_MAC_ADDRESS = "XX:XX:XX:XX:XX:XX"; // Masukkan MAC Address perangkat BLE Anda
+    private static final String BLE_MAC_ADDRESS = "12:34:56:78:9A:BC"; // Masukkan MAC Address perangkat BLE Anda
     private static final UUID SERVICE_UUID = UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb"); // Ganti dengan UUID Service Anda
     private static final UUID CHARACTERISTIC_UUID = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb"); // Ganti dengan UUID Characteristic Anda
     private static final int REQUEST_BLUETOOTH_PERMISSIONS = 1;
@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Bluetooth permissions are required", Toast.LENGTH_SHORT).show();
-                return; // Jangan lanjutkan jika izin tidak diberikan
+                return;
             }
         }
 
@@ -117,18 +117,22 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
                 super.onConnectionStateChange(gatt, status, newState);
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    Log.e("BLE", "Failed to connect. Status: " + status);
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Failed to connect. Status: " + status, Toast.LENGTH_SHORT).show());
+                }
                 if (newState == BluetoothGatt.STATE_CONNECTED) {
                     Log.d("BLE", "Connected to device");
                     runOnUiThread(() -> Toast.makeText(MainActivity.this, "Connected to device", Toast.LENGTH_SHORT).show());
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-                            gatt.discoverServices(); // Aman untuk dijalankan jika izin sudah diberikan
+                            gatt.discoverServices();
                         } else {
                             Log.e("BLE", "Permission BLUETOOTH_CONNECT not granted");
                             runOnUiThread(() -> Toast.makeText(MainActivity.this, "Bluetooth permissions are required to discover services", Toast.LENGTH_SHORT).show());
                         }
                     } else {
-                        gatt.discoverServices(); // Tidak perlu pemeriksaan izin pada Android < 12
+                        gatt.discoverServices();
                     }
                 } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
                     Log.d("BLE", "Disconnected from device");
